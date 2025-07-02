@@ -2,7 +2,7 @@
 
 A concise and organized reference of Cisco routing configuration and verification commands. This cheat sheet is ideal for CCNA/CCNP students, lab enthusiasts, and networking professionals.
 
-![types-of-dynamic-routing-protocol-1024x494](https://github.com/user-attachments/assets/4dae71f0-9c77-4f36-9b8f-346f75cb88ec)
+![types-of-dynamic-routing-protocol-1024x494](https://github.com/user-attachments/assets/b1eefa9c-a33f-44d3-9ab3-8f4b2883b451)
 
 ---
 
@@ -29,6 +29,7 @@ A concise and organized reference of Cisco routing configuration and verificatio
 
 ```bash
 ip route <destination IP > <mask> <next-hop | exit-interface>  # Basic static route
+ip route 0.0.0.0 0.0.0.0 <next-hop>                            # Default static route
 ip route <dest> <mask> null0                                   # Blackhole route (drop traffic)
 ```
 
@@ -70,140 +71,138 @@ Protocols that build a complete map of the network using LSAs:
 
 ### ✅ OSPF Full Configuration Guide
 
-```bash
-router ospf 1
- router-id 1.1.1.1                        # Set router ID
- network 192.168.1.0 0.0.0.255 area 0     # Define area 0
- passive-interface default
- no passive-interface GigabitEthernet0/0
+**Cost Calculation:**
+
+```
+Cost = Reference Bandwidth / Interface Bandwidth
+Default Reference Bandwidth = 100 Mbps
 ```
 
-#### Multi-Area OSPF
+| Attribute      | Value                    |
+| -------------- | ------------------------ |
+| Type           | Link-State               |
+| Algorithm      | Dijkstra (SPF)           |
+| Metric         | Cost (Bandwidth-based)   |
+| AD             | 110                      |
+| RFC            | 2328 (IPv4), 5340 (IPv6) |
+| Protocol       | IP                       |
+| Transport      | IP protocol 89           |
+| Authentication | Plaintext, MD5           |
+| AllSPF Routers | 224.0.0.5                |
+| AllDR Routers  | 224.0.0.6                |
+
+#### OSPF Packet Types
+
+| Type  | Description                      |
+| ----- | -------------------------------- |
+| Hello | Discover and maintain neighbors  |
+| DBD   | Summary of LSDB for comparison   |
+| LSR   | Request specific LSAs            |
+| LSU   | Send LSAs (in reply or flooding) |
+| LSAck | Acknowledge receipt of LSAs      |
+
+#### Router Types
+
+| Router Type     | Description                                         |
+| --------------- | --------------------------------------------------- |
+| Internal Router | All interfaces in one area                          |
+| Backbone Router | Has at least one interface in area 0 (the backbone) |
+| ABR             | Connects multiple OSPF areas                        |
+| ASBR            | Connects to another routing domain (e.g., BGP)      |
+
+#### OSPF Tables
+
+| Table Type     | Command                 |
+| -------------- | ----------------------- |
+| Neighbor Table | `show ip ospf neighbor` |
+| Topology Table | `show ip ospf database` |
+| Routing Table  | `show ip route ospf`    |
+
+#### OSPF Troubleshooting Commands
 
 ```bash
-network 10.1.1.0 0.0.0.255 area 1
-network 10.2.2.0 0.0.0.255 area 2
+show ip protocols
+show ip ospf [process-id]
+show ip ospf interface [brief | <interface>]
+show ip ospf neighbor
+show ip ospf database
+debug ip ospf [hello | adjacency | events]
 ```
 
-#### OSPF Authentication
+#### Example 1: Single-Area OSPF (With Optional Security)
 
 ```bash
-interface GigabitEthernet0/0
- ip ospf authentication message-digest
- ip ospf message-digest-key 1 md5 CISCO123
-router ospf 1
- area 0 authentication message-digest
-```
+# Base Configuration for R1
+interface loopback0  
+ ip address 10.1.1.1 255.255.255.255
+interface serial0/0
+ ip address 192.168.12.1 255.255.255.0
+ ip ospf authentication message-digest        # (optional) Enable MD5 auth on the interface
+ ip ospf message-digest-key 1 md5 SecurePass123  # (optional) Define MD5 key
 
-#### OSPF Summarization (ABR)
-
-```bash
-area 1 range 192.168.0.0 255.255.0.0
-```
-
-#### OSPF Stub & NSSA
-
-```bash
-router ospf 1
- area 1 stub
- area 2 nssa
-```
-
-#### Virtual Link (for disconnected areas)
-
-```bash
-area 1 virtual-link 2.2.2.2
-```
-
-#### OSPFv3 (IPv6)
-
-```bash
-ipv6 unicast-routing
-interface GigabitEthernet0/0
- ipv6 ospf 1 area 0
-router ospf 1 ipv6
+router ospf 100
  router-id 1.1.1.1
+ area 0 authentication message-digest         # (optional) Enable auth in area 0
+ network 192.168.12.0 0.0.0.255 area 0
+ network 10.1.1.1 0.0.0.0 area 0
+
+# Base Configuration for R2
+interface loopback0
+ ip address 10.2.2.2 255.255.255.255
+interface serial0/0
+ ip address 192.168.12.2 255.255.255.0
+ ip ospf authentication message-digest        # (optional) Enable MD5 auth
+ ip ospf message-digest-key 1 md5 SecurePass123  # (optional) Define key
+
+router ospf 100
+ router-id 2.2.2.2
+ area 0 authentication message-digest         # (optional) Match area auth
+ network 192.168.12.0 0.0.0.255 area 0
+ network 10.2.2.2 0.0.0.0 area 0
 ```
 
----
-
-### 3.2. Exterior Gateway Protocols (EGPs)
-
-Used between different autonomous systems (ASes).
-
-#### Path Vector Protocol
-
-- **BGP (Border Gateway Protocol)** – The only widely-used EGP
-  - **BGP-4** – Current standard
-  - **MP-BGP** – Supports multiple address families (IPv4/IPv6/MPLS)
-
-> 🔎 We will focus on the most widely used one: **BGP**.
-
-### ✅ BGP Full Configuration Guide
+#### Example 2: Multi-Area with ABR + Summarization + NSSA + Virtual-Link (Optional Enhancements)
 
 ```bash
-router bgp 65001
- bgp router-id 1.1.1.1
- neighbor 192.0.2.2 remote-as 65002
- network 203.0.113.0 mask 255.255.255.0
-```
+# Router R1 (ABR)
+interface loopback0
+ ip address 10.1.1.1 255.255.255.255
+interface serial0/0
+ ip address 192.168.12.1 255.255.255.0
+interface serial0/1
+ ip address 192.168.13.1 255.255.255.0
 
-#### iBGP Mesh
+router ospf 100
+ router-id 1.1.1.1
+ network 192.168.12.1 0.0.0.0 area 0
+ network 192.168.13.1 0.0.0.0 area 1
+ network 10.1.1.1 0.0.0.0 area 0
+ area 1 range 192.168.13.0 255.255.255.0        # (optional) Summarization
+ area 1 nssa                                    # (optional) Make area 1 NSSA
 
-```bash
-neighbor 10.1.1.1 remote-as 65001
-neighbor 10.1.1.2 remote-as 65001
-```
+# Router R2 (Backbone Router)
+interface loopback0
+ ip address 10.2.2.2 255.255.255.255
+interface serial0/0
+ ip address 192.168.12.2 255.255.255.0
 
-#### BGP Authentication
+router ospf 100
+ router-id 2.2.2.2
+ network 192.168.12.2 0.0.0.0 area 0
+ network 10.2.2.2 0.0.0.0 area 0
+ area 1 virtual-link 1.1.1.1                    # (optional) Virtual link to reach area 1
 
-```bash
-neighbor 192.0.2.2 password mypassword
-```
+# Router R3 (Internal NSSA Router)
+interface serial0/0
+ ip address 192.168.13.3 255.255.255.0
+interface loopback0
+ ip address 10.3.3.3 255.255.255.255
 
-#### BGP Timers
-
-```bash
-neighbor 192.0.2.2 timers 10 30
-```
-
-#### Prefix Advertise Control
-
-```bash
-ip prefix-list MY_LIST seq 5 permit 203.0.113.0/24
-router bgp 65001
- neighbor 192.0.2.2 prefix-list MY_LIST out
-```
-
-#### Route Reflectors
-
-```bash
-router bgp 65001
- bgp cluster-id 1.1.1.1
- neighbor 10.1.1.2 route-reflector-client
-```
-
-#### Confederation
-
-```bash
-router bgp 65001
- bgp confederation identifier 65000
- bgp confederation peers 65010 65020
-```
-
-#### Soft Reconfiguration
-
-```bash
-neighbor 192.0.2.2 soft-reconfiguration inbound
-clear ip bgp * soft
-```
-
-#### BGP IPv6
-
-```bash
-address-family ipv6
- neighbor 2001:db8::2 activate
- neighbor 2001:db8::2 route-map IPV6-IN in
+router ospf 100
+ router-id 3.3.3.3
+ network 192.168.13.3 0.0.0.0 area 1
+ network 10.3.3.3 0.0.0.0 area 1
+ area 1 nssa                                    # (optional) Area 1 is NSSA
 ```
 
 ---
