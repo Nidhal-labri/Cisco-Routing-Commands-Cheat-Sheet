@@ -117,16 +117,6 @@ Default Reference Bandwidth = 100 Mbps
 | Topology Table | `show ip ospf database` |
 | Routing Table  | `show ip route ospf`    |
 
-#### OSPF Troubleshooting Commands
-
-```bash
-show ip protocols
-show ip ospf [process-id]
-show ip ospf interface [brief | <interface>]
-show ip ospf neighbor
-show ip ospf database
-debug ip ospf [hello | adjacency | events]
-```
 
 #### Example 1: Single-Area OSPF (With Optional Security)
 ![image](https://github.com/user-attachments/assets/2493ddfc-aa91-4ad3-acc2-6d9298563caf)
@@ -206,6 +196,16 @@ router ospf 100
  area 1 nssa                                    # (optional) Area 1 is NSSA
 ```
 
+#### OSPF Troubleshooting Commands
+
+```bash
+show ip protocols
+show ip ospf [process-id]
+show ip ospf interface [brief | <interface>]
+show ip ospf neighbor
+show ip ospf database
+debug ip ospf [hello | adjacency | events]
+```
 ---
 
 ## 4. Verification Commands
