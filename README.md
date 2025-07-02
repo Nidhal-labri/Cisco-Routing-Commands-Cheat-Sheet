@@ -29,7 +29,6 @@ A concise and organized reference of Cisco routing configuration and verificatio
 
 ```bash
 ip route <destination IP > <mask> <next-hop | exit-interface>  # Basic static route
-ip route 0.0.0.0 0.0.0.0 <next-hop>                            # Default static route
 ip route <dest> <mask> null0                                   # Blackhole route (drop traffic)
 ```
 
