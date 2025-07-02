@@ -73,10 +73,9 @@ Protocols that build a complete map of the network using LSAs:
 
 **Cost Calculation:**
 
-```
 Cost = Reference Bandwidth / Interface Bandwidth
 Default Reference Bandwidth = 100 Mbps
-```
+
 
 | Attribute      | Value                    |
 | -------------- | ------------------------ |
@@ -130,6 +129,7 @@ debug ip ospf [hello | adjacency | events]
 ```
 
 #### Example 1: Single-Area OSPF (With Optional Security)
+![image](https://github.com/user-attachments/assets/2493ddfc-aa91-4ad3-acc2-6d9298563caf)
 
 ```bash
 # Base Configuration for R1
@@ -162,6 +162,7 @@ router ospf 100
 ```
 
 #### Example 2: Multi-Area with ABR + Summarization + NSSA + Virtual-Link (Optional Enhancements)
+![image](https://github.com/user-attachments/assets/ceeb4dbc-cb0d-40ba-940e-454844f86f1b)
 
 ```bash
 # Router R1 (ABR)
