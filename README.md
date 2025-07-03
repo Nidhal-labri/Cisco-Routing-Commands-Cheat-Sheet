@@ -208,6 +208,136 @@ debug ip ospf [hello | adjacency | events]
 ```
 ---
 
+### 3.2. Exterior Gateway Protocols (EGPs)
+
+#### Path Vector Protocol – BGP
+
+- **BGP (Border Gateway Protocol)**
+  - **BGP-4** – Current standard
+  - **MP-BGP** – Multiprotocol BGP
+
+#### About BGP
+
+| Attribute      | Value          |
+| -------------- | -------------- |
+| Type           | Path Vector    |
+| Algorithm      | Path Selection |
+| eBGP AD        | 20             |
+| iBGP AD        | 200            |
+| RFC Standard   | RFC 4271       |
+| Protocols      | IP             |
+| Transport      | TCP port 179   |
+| Authentication | MD5            |
+
+#### Terminology
+
+| Term                | Description                                                      |
+| ------------------- | ---------------------------------------------------------------- |
+| Autonomous System   | A domain managed by a single organization                        |
+| External BGP (eBGP) | BGP peering between different ASes                               |
+| Internal BGP (iBGP) | BGP peering within the same AS                                   |
+| Synchronization     | IGP must know a route before BGP advertises it (legacy behavior) |
+
+### ✅ BGP Full Configuration Example
+
+**Router A**
+
+```bash
+interface Serial1/0
+ description Backbone to B
+ ip address 172.16.0.1 255.255.255.252
+interface Serial1/1
+ description Backbone to C
+ ip address 172.16.0.5 255.255.255.252
+interface FastEthernet2/0
+ description LAN
+ ip address 192.168.1.1 255.255.255.0
+
+router bgp 65100
+ no synchronization
+ network 172.16.0.0 mask 255.255.255.252
+ network 172.16.0.4 mask 255.255.255.252
+ network 192.168.1.0
+ neighbor South peer-group
+ neighbor South remote-as 65200
+ neighbor 172.16.0.2 peer-group South
+ neighbor 172.16.0.6 peer-group South
+ no auto-summary
+```
+
+**Router B**
+
+```bash
+interface FastEthernet0/0
+ description Local to C
+ ip address 10.0.0.1 255.255.255.252
+interface Serial1/0
+ description Backbone to A
+ ip address 172.16.0.2 255.255.255.252
+interface FastEthernet2/0
+ description LAN
+ ip address 192.168.2.1 255.255.255.0
+
+router ospf 100
+ network 10.0.0.1 0.0.0.0 area 0
+ network 192.168.2.0 0.0.0.255 area 1
+
+router bgp 65200
+ no synchronization
+ redistribute ospf 100 route-map LAN_Subnets
+ neighbor 10.0.0.2 remote-as 65200
+ neighbor 172.16.0.1 remote-as 65100
+ no auto-summary
+
+access-list 10 permit 192.168.0.0 0.0.255.255
+route-map LAN_Subnets permit 10
+ match ip address 10
+ set metric 100
+```
+
+**Router C**
+
+```bash
+interface FastEthernet0/0
+ description Local to B
+ ip address 10.0.0.2 255.255.255.252
+interface Serial1/0
+ description Backbone to A
+ ip address 172.16.0.6 255.255.255.252
+interface FastEthernet2/0
+ description LAN
+ ip address 192.168.3.1 255.255.255.0
+
+router ospf 100
+ network 10.0.0.2 0.0.0.0 area 0
+ network 192.168.3.0 0.0.0.255 area 2
+
+router bgp 65200
+ no synchronization
+ redistribute ospf 100 route-map LAN_Subnets
+ neighbor 10.0.0.1 remote-as 65200
+ neighbor 172.16.0.5 remote-as 65100
+ no auto-summary
+
+access-list 10 permit 192.168.0.0 0.0.255.255
+route-map LAN_Subnets permit 10
+ match ip address 10
+ set metric 100
+```
+
+#### BGP Troubleshooting
+
+```bash
+show ip bgp
+show ip bgp summary
+show ip bgp neighbors
+show ip route [bgp]
+clear ip bgp * [soft]
+debug ip bgp events
+debug ip bgp updates
+```
+---
+
 ## 4. Verification Commands
 
 ```bash
