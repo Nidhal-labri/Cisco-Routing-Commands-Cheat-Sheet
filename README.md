@@ -18,10 +18,6 @@ A concise and organized reference of Cisco routing configuration and verificatio
 4. [Routing Verification Commands](#4-verification-commands)
 5. [Administrative Distance](#5-administrative-distance)
 6. [Route Manipulation & Useful Routing Commands](#6-route-manipulation--useful-routing-commands)
-7. [Route Redistribution](#7-route-redistribution)
-8. [Policy-Based Routing (PBR)](#8-policy-based-routing-pbr)
-9. [Route Filtering Techniques](#9-route-filtering-techniques)
-10. [Resources & Contributions](#10-resources--contributions)
 
 ---
 
@@ -240,6 +236,9 @@ debug ip ospf [hello | adjacency | events]
 
 ### ✅ BGP Full Configuration Example
 
+![DD](https://github.com/user-attachments/assets/93389b28-29c5-4494-bac9-8f60e9bb9fd2)
+
+
 **Router A**
 
 ```bash
@@ -375,91 +374,12 @@ ip route <network> <mask> null0         # Discard route
 
 ---
 
-## 7. Route Redistribution
+## 🧠 Contributions
 
-Redistributing routes between different routing protocols.
-
-### Basic Redistribution (EIGRP to OSPF example):
-
-```bash
-router ospf 1
- redistribute eigrp 100 subnets
-```
-
-### Mutual Redistribution:
-
-```bash
-router ospf 1
- redistribute eigrp 100 subnets
-router eigrp 100
- redistribute ospf 1 metric 10000 100 255 1 1500
-```
-
-### With Route-Map Filtering:
-
-```bash
-route-map REDIST_OSPF_TO_EIGRP permit 10
- match ip address 10
- set metric 10000 100 255 1 1500
-router eigrp 100
- redistribute ospf 1 route-map REDIST_OSPF_TO_EIGRP
-```
+Contributions, corrections, and improvements are welcome. Open a pull request or create an issue!
 
 ---
 
-## 8. Policy-Based Routing (PBR)
+**Made with 💻 by Nidhal** | **[LinkedIn](https://www.linkedin.com/in/nidhal-labri/)**
 
-PBR allows routing decisions based on policies rather than the routing table.
-
-```bash
-access-list 100 permit ip 192.168.1.0 0.0.0.255 any
-route-map PBR_POLICY permit 10
- match ip address 100
- set ip next-hop 10.0.0.1
-interface GigabitEthernet0/0
- ip policy route-map PBR_POLICY
-```
-
----
-
-## 9. Route Filtering Techniques
-
-### Distribute-List Filtering (OSPF Example)
-
-```bash
-access-list 1 deny 192.168.1.0 0.0.0.255
-access-list 1 permit any
-router ospf 1
- distribute-list 1 out GigabitEthernet0/0
-```
-
-### Prefix List Filtering (BGP Example)
-
-```bash
-ip prefix-list BLOCK_ROUTES seq 5 deny 10.0.0.0/8
-ip prefix-list BLOCK_ROUTES seq 10 permit 0.0.0.0/0 le 32
-router bgp 65001
- neighbor 203.0.113.2 prefix-list BLOCK_ROUTES out
-```
-
-### Route-Map Filtering with Tags
-
-```bash
-route-map FILTER_TAG deny 10
- match tag 10
-route-map FILTER_TAG permit 20
-router ospf 1
- distribute-list route-map FILTER_TAG in
-```
-
----
-
-## 10. Resources & Contributions
-
-📬 Contributions, corrections, and improvements are welcome. Open a pull request or create an issue!
-
----
-
-**Made with 💻 by Nidhal**\
-[LinkedIn](https://www.linkedin.com/in/nidhal-labri/)
 
